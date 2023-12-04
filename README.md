@@ -1,12 +1,12 @@
 <a href="https://github.com/GameDev46" title="Go to GitHub repo">
     <img src="https://img.shields.io/static/v1?label=GameDev46&message=Profile&color=Green&logo=github&style=for-the-badge&labelColor=1f1f22" alt="GameDev46 - block_battles">
-    <img src="https://img.shields.io/badge/Version-1.1.7-green?style=for-the-badge&labelColor=1f1f22&color=Green" alt="GameDev46 - block_battles">
+    <img src="https://img.shields.io/badge/Version-1.5.0-green?style=for-the-badge&labelColor=1f1f22&color=Green" alt="GameDev46 - block_battles">
 </a>
-
 
 ![Static Badge](https://img.shields.io/badge/-HTML5-1f1f22?style=for-the-badge&logo=HTML5)
 ![Static Badge](https://img.shields.io/badge/-CSS-1f1f22?style=for-the-badge&logo=CSS3&logoColor=6060ef)
 ![Static Badge](https://img.shields.io/badge/-JavaScript-1f1f22?style=for-the-badge&logo=JavaScript)
+![Static Badge](https://img.shields.io/badge/-NODE.JS-1f1f22?style=for-the-badge&logo=node.js)
     
 <a href="https://github.com/GameDev46/block_battles/stargazers">
     <img src="https://img.shields.io/github/stars/GameDev46/block_battles?style=for-the-badge&labelColor=1f1f22" alt="stars - block_battles">
@@ -33,8 +33,8 @@
 <br>
 
 <div align="left">
-<a href="https://gamedev46.github.io/block_battles/">
-    <img src="https://img.shields.io/badge/View_site-GH_Pages-2ea44f?style=for-the-badge&labelColor=1f1f22" alt="View site - GH Pages">
+<a href="https://blockbattles.gamedev46.repl.co/">
+    <img src="https://img.shields.io/badge/View_site-replit.com-2ea44f?style=for-the-badge&labelColor=1f1f22" alt="View site - Replit.com">
 </a>
 </div>
 
@@ -63,4 +63,4 @@ This is a simple demo of a multiplayer 3D shooter game that runs on the web brow
 
 ## Website
 
-You can run the program in realtime [here, on its website](https://gamedev46.github.io/block_battles/) as it is programmed using HTML, CSS, JS or alternatively you can download the repository and then run it locally on your device.
+Unfortunately the program cannot be run using a github page as it requires server side technology to properly run the multiplayer, you can however download the repository and then run it locally on your device or instead use the version which is [hosted on replit](https://blockbattles.gamedev46.repl.co/), which works exactly the same as the one in this repository!
