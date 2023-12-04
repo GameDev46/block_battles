@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=0">
+
+		<meta name="description" content="Be stealthy and sneak around and shoot your friends in battle with your trusty pistol and the camouflage of the tall grass or maybe instead run and gun them down in a mass killing spree, the choice is yours...">
+		<meta name="keywords" content="FPS, first person shooter, online, multiplayer, first, person, shooter, game, fun, friends, join, create">
+	<meta name="author" property="og:author" content="GameDev46">
+
+	<meta name="theme-color" content="#0F0F0F">
+
+	<meta property="og:image" content="/images/logo.png">
+	<meta property="og:site_name" content="Block Battles">
+	<meta itemprop="name" content="Block Battles">
+
+	<meta name="twitter:card" content="summary">
+	<meta name="twitter:site" content="@GameDev46">
+	<meta name="twitter:title" content="Battle your friends for victory!">
+	<meta name="twitter:description" content="Be stealthy and sneak around and shoot your friends in battle with your trusty pistol and the camouflage of the tall grass or maybe instead run and gun them down in a mass killing spree, the choice is yours...">
+	<meta name="twitter:image" content="/images/logo.png">
+
+		<title>Block Battles [Alpha]</title>
+		<link href="style.css" rel="stylesheet" type="text/css" />
+
+		<link rel="icon" href="/images/logo.png" type="image/png" />
+	
+</head>
+
+<body>
+
+	<script src="https://unpkg.com/feather-icons"></script>
+
+	<div class="stats slideLeft sitBottom">
+
+		<div class="inline">
+			<i data-feather="zap"></i>
+			<progress value="50" max="100" id="stamina"></progress>
+		</div>
+
+		<div class="inline">
+			<i data-feather="heart"></i>
+			<progress value="50" max="100" id="health"></progress>
+		</div>
+
+	</div>
+
+	<div class="stats slideRight sitBottom">
+
+		<div class="inlineRight">
+			<i data-feather="navigation-2"></i>
+			<h2><span class="largeText" id="ammo">30</span> / <span class="smallText" id="maxAmmo">30</span></h2>
+		</div>
+
+		<div class="inlineRight">
+			<i data-feather="rotate-cw"></i>
+			<progress value="50" max="100" id="reload"></progress>
+		</div>
+
+	</div>
+
+	<div class="leaderboard" id="leaderboard">
+
+	</div>
+
+	<h2 class="fps" id="fps">FPS: 0</h2>
+	<h2 class="ping" id="ping">Ping: 0ms</h2>
+	<h2 id="roomName" class="roomName">Room: Lobby</h2>
+
+	<div class="mainMenu" id="mainMenu">
+
+		<input type="text" value="" placeholder="Room Name" id="roomInput" autocomplete="off">
+		<input type="text" value="" placeholder="Username" id="nameInput" autocomplete="off">
+		<button id="joinButton">Join</button>
+
+	</div>
+
+	<script src="/socket.io/socket.io.min.js"></script>
+	<script src="script.js" type="module"></script>
+
+	<script>
+		feather.replace();
+	</script>
+
+</body>
+
+</html>
