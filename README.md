@@ -34,7 +34,7 @@
 
 <div align="left">
 <a href="https://blockbattles.gamedev46.repl.co/">
-    <img src="https://img.shields.io/badge/View_site-replit.com-2ea44f?style=for-the-badge&labelColor=1f1f22" alt="View site - Replit.com">
+    <img src="https://img.shields.io/badge/View_site-replit-2ea44f?style=for-the-badge&labelColor=1f1f22" alt="View site - Replit.com">
 </a>
 </div>
 
