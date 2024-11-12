@@ -1,6 +1,6 @@
 <a href="https://github.com/GameDev46" title="Go to GitHub repo">
     <img src="https://img.shields.io/static/v1?label=GameDev46&message=|&color=Green&logo=github&style=for-the-badge&labelColor=1f1f22" alt="GameDev46 - block_battles">
-    <img src="https://img.shields.io/badge/Version-1.5.0-green?style=for-the-badge&labelColor=1f1f22&color=Green" alt="GameDev46 - block_battles">
+    <img src="https://img.shields.io/badge/Version-1.5.2-green?style=for-the-badge&labelColor=1f1f22&color=Green" alt="GameDev46 - block_battles">
 </a>
 
 ![Static Badge](https://img.shields.io/badge/--1f1f22?style=for-the-badge&logo=HTML5)
