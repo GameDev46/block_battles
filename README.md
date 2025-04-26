@@ -35,7 +35,7 @@
 </p>
 
 # block_battles
-Be stealthy and sneak around and shoot your friends in battle with your trusty pistol and the camouflage of the tall grass or maybe instead run and gun them down in a mass killing spree, the choice is yours...
+A shooter game prototype
 
 ## What is this
 
