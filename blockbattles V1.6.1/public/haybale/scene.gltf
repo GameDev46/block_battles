@@ -1,0 +1,304 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 12529,
+      "max": [
+        12.189823150634766,
+        10.2080717086792,
+        11.175837516784668
+      ],
+      "min": [
+        -10.03271198272705,
+        -11.064316749572754,
+        -13.742812156677246
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 150348,
+      "componentType": 5126,
+      "count": 12529,
+      "max": [
+        0.9999876022338867,
+        0.9840893745422363,
+        0.9998754262924194
+      ],
+      "min": [
+        -0.9999712705612183,
+        -0.9999383091926575,
+        -0.9995777606964111
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 12529,
+      "max": [
+        0.9999439716339111,
+        0.9998810291290283,
+        0.999997615814209,
+        1.0
+      ],
+      "min": [
+        -0.9998048543930054,
+        -0.9997062087059021,
+        -0.9999099373817444,
+        -1.0
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 12529,
+      "max": [
+        0.9962773323059082,
+        0.9994942545890808
+      ],
+      "min": [
+        0.0005136331310495734,
+        0.0005499415565282106
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 65661,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "3dhdscan (https://sketchfab.com/3dhdscan)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/a-round-bundle-of-straw-in-the-field-7764eb5d300545fc8d9ff3ffabbe2d36",
+      "title": "A round bundle of straw in the field"
+    },
+    "generator": "Sketchfab-12.67.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 262644,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 100232,
+      "byteOffset": 262644,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 300696,
+      "byteOffset": 362876,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 200464,
+      "byteOffset": 663572,
+      "byteStride": 16,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 864036,
+      "uri": "scene.bin"
+    }
+  ],
+  "extensionsRequired": [
+    "KHR_materials_pbrSpecularGlossiness"
+  ],
+  "extensionsUsed": [
+    "KHR_materials_pbrSpecularGlossiness"
+  ],
+  "images": [
+    {
+      "uri": "textures/balik_slamy_diffuse.jpeg"
+    },
+    {
+      "uri": "textures/balik_slamy_normal.jpeg"
+    },
+    {
+      "uri": "textures/balik_slamy_occlusion.png"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseFactor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "diffuseTexture": {
+            "index": 0
+          },
+          "glossinessFactor": 0.11756859756097562,
+          "specularFactor": [
+            0.09927591463414634,
+            0.09927591463414634,
+            0.09927591463414634
+          ]
+        }
+      },
+      "name": "balik_slamy",
+      "normalTexture": {
+        "index": 1
+      },
+      "occlusionTexture": {
+        "index": 2
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "balik_slamy_balik_slamy_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TANGENT": 2,
+            "TEXCOORD_0": 3
+          },
+          "indices": 4,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "matrix": [
+        8.74547869559958e-18,
+        0.008399713409155702,
+        -0.07832314579596655,
+        0.0,
+        2.623643608679874e-17,
+        0.07832314579596655,
+        0.008399713409155702,
+        0.0,
+        0.07877226918935776,
+        -8.745478695599578e-18,
+        -8.745478695599581e-18,
+        0.0,
+        -0.18182633817195892,
+        -10.373353958129881,
+        -11.74768924713135,
+        1.0
+      ],
+      "name": "Sketchfab_model"
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "balik_slamy.FBX"
+    },
+    {
+      "children": [
+        3
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        4
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -0.8153367042541504,
+        -10.424139976501465,
+        0.8384304046630859,
+        1.0
+      ],
+      "name": "balik_slamy"
+    },
+    {
+      "mesh": 0,
+      "name": "balik_slamy_balik_slamy_0"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ]
+}
