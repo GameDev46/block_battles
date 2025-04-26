@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=0"
+    />
+
+    <meta
+      name="description"
+      content="Be stealthy and sneak around and shoot your friends in battle with your trusty pistol and the camouflage of the tall grass or maybe instead run and gun them down in a mass killing spree, the choice is yours..."
+    />
+    <meta
+      name="keywords"
+      content="FPS, first person shooter, online, multiplayer, first, person, shooter, game, fun, friends, join, create"
+    />
+    <meta name="author" property="og:author" content="GameDev46" />
+
+    <meta name="theme-color" content="#0F0F0F" />
+
+    <meta property="og:image" content="/images/logo.png" />
+    <meta property="og:site_name" content="Block Battles" />
+    <meta itemprop="name" content="Block Battles" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@GameDev46" />
+    <meta name="twitter:title" content="Battle your friends for victory!" />
+    <meta
+      name="twitter:description"
+      content="Be stealthy and sneak around and shoot your friends in battle with your trusty pistol and the camouflage of the tall grass or maybe instead run and gun them down in a mass killing spree, the choice is yours..."
+    />
+    <meta name="twitter:image" content="/images/logo.png" />
+
+    <title>Block Battles [Alpha]</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+
+    <link rel="icon" href="/images/logo.png" type="image/png" />
+  </head>
+
+  <body>
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <div class="stats slideLeft sitBottom">
+      <div class="inline">
+        <i data-feather="zap"></i>
+        <progress value="50" max="100" id="stamina"></progress>
+      </div>
+
+      <div class="inline">
+        <i data-feather="heart"></i>
+        <progress value="50" max="100" id="health"></progress>
+      </div>
+    </div>
+
+    <div class="stats slideRight sitBottom">
+      <div class="inlineRight">
+        <i data-feather="navigation-2"></i>
+        <h2>
+          <span class="largeText" id="ammo">30</span> /
+          <span class="smallText" id="maxAmmo">30</span>
+        </h2>
+      </div>
+
+      <div class="inlineRight">
+        <i data-feather="rotate-cw"></i>
+        <progress value="50" max="100" id="reload"></progress>
+      </div>
+    </div>
+
+    <div class="leaderboard" id="leaderboard"></div>
+
+    <h2 class="fps" id="fps">FPS: 0</h2>
+    <h2 class="ping" id="ping">Ping: 0ms</h2>
+    <h2 id="roomName" class="roomName">Room: Lobby</h2>
+
+    <div class="mainMenu" id="mainMenu">
+      <div class="logo">
+        <img src="/images/gun.png" draggable="false" />
+        <h2>Block Battles</h2>
+        <img src="/images/gun.png" draggable="false" />
+      </div>
+
+      <input
+        type="text"
+        value=""
+        placeholder="Username"
+        id="lobbyNameInput"
+        autocomplete="off"
+      />
+      <button id="joinLobby">Click To Play</button>
+
+      <div class="bottomNavBar">
+        <button id="openRoomOptions">Host / Join Game</button>
+        <button id="settings">Settings</button>
+        <button id="credits">Credits</button>
+      </div>
+
+      <div class="panel" id="joinRoom">
+        <input
+          type="text"
+          value=""
+          placeholder="Room Name"
+          id="roomInput"
+          autocomplete="off"
+        />
+        <input
+          type="text"
+          value=""
+          placeholder="Username"
+          id="nameInput"
+          autocomplete="off"
+        />
+        <button id="joinButton">Join</button>
+      </div>
+
+      <div class="panel" id="settingsPanel">
+        <p>Antialiasing:</p>
+        <input type="checkbox" id="antialiasing" checked />
+
+        <p>Resolution:</p>
+        <input
+          type="range"
+          value="1"
+          min="0.1"
+          max="1"
+          step="0.1"
+          id="resolution"
+        />
+
+        <p>Sensitivity:</p>
+        <input
+          type="range"
+          value="0.002"
+          min="0.0001"
+          max="0.01"
+          step="0.0001"
+          id="sensitivity"
+        />
+
+        <button id="resetSettings">Reset</button>
+      </div>
+
+      <div class="panel" id="creditsPanel">
+        <p>Player Model + Animations:</p>
+        <div class="creditBlock">Adobe Mixamo - https://www.mixamo.com/</div>
+
+        <p>Gun Model:</p>
+        <div class="creditBlock">
+          "Pistol" (https://skfb.ly/6REZM) by DJMaesen is licensed under
+          Creative Commons Attribution
+          (http://creativecommons.org/licenses/by/4.0/)
+        </div>
+
+        <p>Trees:</p>
+        <div class="creditBlock">
+          "Fir Tree Stylized" (https://skfb.ly/6UrU6) by AnnaBelle Fibonacci is
+          licensed under Creative Commons Attribution
+          (http://creativecommons.org/licenses/by/4.0/)
+        </div>
+
+        <p>Haybales:</p>
+        <div class="creditBlock">
+          "A round bundle of straw in the field" (https://skfb.ly/6szwE) by
+          3dhdscan is licensed under Creative Commons Attribution
+          (http://creativecommons.org/licenses/by/4.0/).
+        </div>
+
+        <p>Grass Audio:</p>
+        <div class="creditBlock">
+          "Footsteps on Grass - Sound Effect || Copyright Free"
+          (https://www.youtube.com/watch?v=7XdcAHLxQJE) by Sound Finder on
+          YouTube
+        </div>
+
+        <p>Water Audio:</p>
+        <div class="creditBlock">
+          "Walking In Water - Sound Effect (Copyright Free)"
+          (https://www.youtube.com/watch?v=KLWN6s4p7cU) by Free Sounds Global on
+          YouTube
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.min.js"></script>
+    <script src="script.js" type="module"></script>
+
+    <script>
+      feather.replace();
+    </script>
+  </body>
+</html>
