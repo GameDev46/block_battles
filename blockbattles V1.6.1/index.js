@@ -13,13 +13,8 @@
 /* 
 	AUTHOR: GameDev46
 
-	replit: https://replit.com/@GameDev46
-	youtube: https://www.youtube.com/@gamedev46
-	twitter: https://twitter.com/GameDev46
-
-	Copyright of GameDev46
-
-	Give clear and visible credit if using! (much appreciated 😄)
+	Youtube: https://www.youtube.com/@gamedev46
+	Github: https://github.com/GameDev46
 */
 
 const express = require("express");
