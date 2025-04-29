@@ -40,23 +40,38 @@ io.on("connection", (socket) => {
 
   socket.on("position", (data) => {
     //io.to(room).emit("position", data, room, rotation);
+    if (data.socketID == null) return;
     playerPositionCache.push(data);
   });
 
   socket.on("shootBall", (data) => {
+    if (data.socketID == null) return;
     io.emit("shootBall", data);
   });
 
+  socket.on("reloadingGun", (data) => {
+    if (data.socketID == null) return;
+    io.emit("reloadingGun", data);
+  });
+
+  socket.on("shotBullet", (data) => {
+    if (data.socketID == null) return;
+    io.emit("shotBullet", data);
+  });
+
   socket.on("roomChange", (data) => {
+    if (data.socketID == null) return;
     socket.join(data.room);
     io.emit("roomChange", data);
   });
 
   socket.on("hitPlayer", (data) => {
+    if (data.socketID == null) return;
     io.emit("hitPlayer", data);
   });
 
   socket.on("killedPlayer", (data) => {
+    if (data.socketID == null) return;
     io.emit("killedPlayer", data);
   });
 
