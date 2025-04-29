@@ -25,12 +25,11 @@
 import * as THREE from "./three/three.module.min.js";
 import { PointerLockControls } from "./three/PointerLockControls.js";
 import { GLTFLoader } from "./three/GLTFLoader.js";
+import { ImprovedNoise } from './three/ImprovedNoise.js';
 import { Sky } from "./three/sky.js";
 
 import { vertexShader, fragmentShader } from "./shaders/grassShader.js";
 import { worldData } from "./treeOffsets.js";
-
-//import { GLTFLoader } from '/three/GLTFLoader.js';
 
 let scene,
   camera,
@@ -106,6 +105,10 @@ player = {
   },
   jumpVelocity: 25,
   grounded: true,
+  canJump: false,
+  isMoving: 0,
+  isRunning: 0,
+  isUnderwater: false,
   gravity: 9.81 * 5,
   crouchHeight: 1,
   crouchSpeedMultiplier: 0.5,
@@ -127,21 +130,22 @@ player = {
       lastShootTime: 0,
       shootDelay: 0.2,
       damage: 20,
+      shootAudio: new Audio("/player/sounds/pistolShoot.mp3"),
     }, {
-      name: "Ball",
-      ammo: 5,
-      maxAmmo: 5,
-      reloadCounter: 5,
+      name: "Ball Launcher",
+      ammo: 15,
+      maxAmmo: 15,
+      reloadCounter: 7,
       isReloading: false,
-      reloadTime: 5,
+      reloadTime: 7,
       currentRecoil: 0,
       recoilSpeed: 5,
       recoil: 2,
       lastShootTime: 0,
       shootDelay: 0.5,
       damage: 40,
+      shootAudio: new Audio("/player/sounds/ballShoot.wav"),
     }],
-    shootAudio: new Audio("/player/sounds/pistolShoot.mp3"),
     reloadAudio: new Audio("/player/sounds/pistolReload.mp3"),
     hitAudio: new Audio("/player/sounds/impact.mp3"),
     damageAudio: new Audio("/player/sounds/playerDamaged.mp3"),
@@ -216,19 +220,26 @@ let textureLoader = {
   waterNormal: sceneLoader.load("./textures/waterNormal.png"),
 };
 
-function getGroundHeight(x, z) {
-  //return 0;
-  let largeDetails =
-    Math.cos(x * 0.005) *
-    Math.cos(z * 0.0025) *
-    Math.sin(x * z * 0.15 * 0.0005) *
-    20;
-  largeDetails = clamp(largeDetails, -10, 10);
+const noise = new ImprovedNoise();
 
-  // Small details don't work with the ground height - need to fix
-  let smallDetails = Math.sin(x * 0.1) * Math.cos(z * 0.2) * 0.3;
+function getGroundHeight(x, y) {
+  const hillScale = 0.01;
+  const riverScale = 0.005;
 
-  return largeDetails + smallDetails;
+  const hillNoise = noise.noise(x * hillScale, y * hillScale, 0);
+  const riverNoise = noise.noise(x * riverScale, y * riverScale, 100);
+
+  // Sharpen hills into cliffs
+  let sharpened = Math.pow(Math.abs(hillNoise), 1.5) * Math.sign(hillNoise);
+  let height = sharpened * 70;
+
+  // Carve river valleys
+  const riverThreshold = 0.08;
+  if (Math.abs(riverNoise) < riverThreshold) {
+    height -= Math.min((riverThreshold - Math.abs(riverNoise)) * 100, 5);
+  }
+
+  return height;
 }
 
 function clamp(num, low, up) {
@@ -295,8 +306,8 @@ function init() {
         z: 0,
       },
       segments: {
-        x: Math.round(WORLD_SIZE / 8),
-        y: Math.round(WORLD_SIZE / 8),
+        x: Math.round(WORLD_SIZE / 5),
+        y: Math.round(WORLD_SIZE / 5),
       },
       name: "ground",
       colour: 0x454545,
@@ -322,8 +333,8 @@ function init() {
       z: 0,
     },
     segments: {
-      x: Math.round(WORLD_SIZE / 16),
-      y: Math.round(WORLD_SIZE / 16),
+      x: Math.round(WORLD_SIZE / 20),
+      y: Math.round(WORLD_SIZE / 20),
     },
     name: "water",
     colour: 0xffffff,
@@ -531,6 +542,8 @@ function init() {
   });
 
   socket.on("roomChange", (data) => {
+    if (data.socketID == null) return;
+
     if (data.lastRoom == player.room) {
       if (multiplayer.players[data.socketID]) {
         scene.remove(multiplayer.players[data.socketID]);
@@ -560,6 +573,8 @@ function init() {
 		} */
 
   socket.on("position", (data) => {
+    if (data.socketID == null) return;
+
     if (data.roomID == player.room && data.socketID != undefined) {
       if (data.socketID != socket.id) {
         // Create or position player
@@ -588,25 +603,16 @@ function init() {
           );
 
           multiplayer.players[data.socketID].rotation.order = "ZYX";
-          multiplayer.players[data.socketID].rotation.y =
-            data.rotation + 3.1415;
+          multiplayer.players[data.socketID].rotation.y = data.rotation + 3.1415;
 
           // Update animations
 
-          let multiplayerLastState =
-            multiplayer.lastStates[data.socketID] || "walk";
+          let multiplayerLastState = multiplayer.lastStates[data.socketID] || "walk";
 
           if (multiplayerLastState != data.state) {
-            if (
-              multiplayerLastState != "" &&
-              multiplayer.playerAnimations[data.socketID][
-                multiplayerLastState
-              ] != null
-            ) {
+            if (multiplayerLastState != "" && multiplayer.playerAnimations[data.socketID][multiplayerLastState] != null) {
               fadeToAction(
-                multiplayer.playerAnimations[data.socketID][
-                  multiplayerLastState
-                ],
+                multiplayer.playerAnimations[data.socketID][multiplayerLastState],
                 multiplayer.playerAnimations[data.socketID][data.state],
                 0.2,
               );
@@ -617,6 +623,55 @@ function init() {
 
             multiplayer.lastStates[data.socketID] = data.state;
           }
+        
+          if (data.isMoving > 0 && data.grounded) {
+
+            // Calculate distance to player
+            let distanceToPlayer = multiplayer.players[data.socketID].position.distanceTo(camera.position);
+            distanceToPlayer *= distanceToPlayer;
+            distanceToPlayer *= 0.0008;
+            distanceToPlayer += 1;
+
+            if (data.isCrouching) distanceToPlayer *= 4;
+
+            // Play footstep sounds
+            multiplayer.players[data.socketID].footstepAudio.volume = 0.3 / distanceToPlayer;
+            multiplayer.players[data.socketID].waterFootstepAudio.volume = 0.3 / distanceToPlayer;
+        
+            if (multiplayer.players[data.socketID].footstepAudio.paused) {
+              if (getGroundHeight(data.position.x, data.position.z) > waterLevel - 2) {
+                // On land
+                multiplayer.players[data.socketID].waterFootstepAudio.pause();
+                multiplayer.players[data.socketID].footstepAudio.currentTime = 0;
+                multiplayer.players[data.socketID].footstepAudio.play();
+              }
+            }
+        
+            if (multiplayer.players[data.socketID].waterFootstepAudio.paused) {
+              if (getGroundHeight(data.position.x, data.position.z) <= waterLevel - 2) {
+                // In water
+                multiplayer.players[data.socketID].waterFootstepAudio.currentTime = 0;
+                multiplayer.players[data.socketID].waterFootstepAudio.play();
+                multiplayer.players[data.socketID].footstepAudio.pause();
+              }
+            }
+        
+            if (data.isRunning > 1) {
+              multiplayer.players[data.socketID].footstepAudio.playbackRate = 2;
+              multiplayer.players[data.socketID].waterFootstepAudio.playbackRate = 2;
+            } else {
+              multiplayer.players[data.socketID].footstepAudio.playbackRate = 1.25;
+              multiplayer.players[data.socketID].waterFootstepAudio.playbackRate = 1.25;
+            }
+          } else {
+            // Stop footstep sounds
+            multiplayer.players[data.socketID].footstepAudio.currentTime = 0;
+            multiplayer.players[data.socketID].footstepAudio.pause();
+        
+            multiplayer.players[data.socketID].waterFootstepAudio.currentTime = 0;
+            multiplayer.players[data.socketID].waterFootstepAudio.pause();
+          }
+
         }
 
         // Update scores
@@ -631,7 +686,44 @@ function init() {
     }
   });
 
+  socket.on("reloadingGun", (data) => {
+    if (data.socketID == null) return;
+
+    if (data.roomID == player.room && data.socketID != socket.id) {
+      let distanceToPlayer = multiplayer.players[data.socketID].position.distanceTo(camera.position);
+      distanceToPlayer *= distanceToPlayer;
+      distanceToPlayer *= 0.0016;
+      distanceToPlayer += 1;
+
+      // Play shoot sound
+      multiplayer.players[data.socketID].reloadAudio.volume = 1 / distanceToPlayer;
+
+      multiplayer.players[data.socketID].reloadAudio.currentTime = 0;
+      multiplayer.players[data.socketID].reloadAudio.play();
+    }
+  });
+
+  socket.on("shotBullet", (data) => {
+    if (data.socketID == null) return;
+
+    if (data.roomID == player.room && data.socketID != socket.id) {
+      let distanceToPlayer = multiplayer.players[data.socketID].position.distanceTo(camera.position);
+      distanceToPlayer *= distanceToPlayer;
+      distanceToPlayer *= 0.0003;
+      distanceToPlayer += 1;
+
+      // Play shoot sound
+      multiplayer.players[data.socketID].shootBulletAudio.volume = 0.5 / distanceToPlayer;
+      multiplayer.players[data.socketID].shootBulletAudio.playbackRate = 1.5;
+
+      multiplayer.players[data.socketID].shootBulletAudio.currentTime = 0;
+      multiplayer.players[data.socketID].shootBulletAudio.play();
+    }
+  });
+
   socket.on("shootBall", (data) => {
+    if (data.socketID == null) return;
+
     if (data.roomID == player.room && data.socketID != socket.id) {
       let gunPos = new THREE.Vector3();
       gunPos.x = data.position.x;
@@ -644,10 +736,24 @@ function init() {
       velocity.z = data.velocity.z;
 
       createProjectile(gunPos, velocity, data.socketID);
+
+      let distanceToPlayer = multiplayer.players[data.socketID].position.distanceTo(camera.position);
+      distanceToPlayer *= distanceToPlayer;
+      distanceToPlayer *= 0.0008;
+      distanceToPlayer += 1;
+
+      // Play shoot sound
+      multiplayer.players[data.socketID].shootBallAudio.volume = 0.4 / distanceToPlayer;
+      multiplayer.players[data.socketID].shootBallAudio.playbackRate = 1.5;
+
+      multiplayer.players[data.socketID].shootBallAudio.currentTime = 0;
+      multiplayer.players[data.socketID].shootBallAudio.play();
     }
   });
 
   socket.on("hitPlayer", (data) => {
+    if (data.socketID == null) return;
+
     if (data.roomID == player.room) {
       if (data.hitPlayer == socket.id) {
         // Deduct health
@@ -680,6 +786,8 @@ function init() {
   });
 
   socket.on("killedPlayer", (data) => {
+    if (data.socketID == null) return;
+
     if (data.roomID == player.room) {
       if (data.socketID == socket.id) {
         // Killed player
@@ -718,11 +826,18 @@ function init() {
 
         player.gun.guns[player.gun.selectedGun].currentRecoil = player.gun.guns[player.gun.selectedGun].recoil;
 
-        player.gun.shootAudio.volume = 0.5;
-        player.gun.shootAudio.playbackRate = 1.5;
+        player.gun.guns[player.gun.selectedGun].shootAudio.volume = 0.5;
+        player.gun.guns[player.gun.selectedGun].shootAudio.playbackRate = 1.5;
 
-        player.gun.shootAudio.currentTime = 0;
-        player.gun.shootAudio.play();
+        player.gun.guns[player.gun.selectedGun].shootAudio.currentTime = 0;
+        player.gun.guns[player.gun.selectedGun].shootAudio.play();
+
+        if (player.gun.selectedGun == 0) {
+          socket.emit("shotBullet", {
+            roomID: player.room,
+            socketID: socket.id
+          });
+        }
 
         if (player.gun.selectedGun == 1) {
           // Shoot ball
@@ -849,6 +964,11 @@ function init() {
 
           player.gun.reloadAudio.currentTime = 0;
           player.gun.reloadAudio.play();
+
+          socket.emit("reloadingGun", {
+            roomID: player.room,
+            socketID: socket.id
+          });
         }
       }
     }
@@ -977,6 +1097,12 @@ function createOnlinePlayer(multiplayerID) {
     });
 
     scene.add(mesh);
+
+    mesh.footstepAudio = new Audio("/player/sounds/grassFootsteps.wav");
+    mesh.waterFootstepAudio = new Audio("/player/sounds/waterFootsteps.wav");
+    mesh.shootBallAudio = new Audio("/player/sounds/ballShoot.wav");
+    mesh.shootBulletAudio = new Audio("/player/sounds/pistolShoot.mp3");
+    mesh.reloadAudio = new Audio("/player/sounds/pistolReload.mp3");
 
     multiplayer.players[multiplayerID] = mesh;
 
@@ -1113,11 +1239,7 @@ function loadTrees() {
 
         // Create the trees' hitboxes
 
-        const cubeGeometry = new THREE.BoxGeometry(
-          6,
-          30,
-          6,
-        );
+        const cubeGeometry = new THREE.CylinderGeometry(2.5, 2.5, 30, 12, 1);
         
         const cubeMaterial = new THREE.MeshLambertMaterial({
           color: 0xffffff,
@@ -1193,7 +1315,7 @@ function loadBushes() {
 
       let groundHeight = getGroundHeight(randX, randZ);
 
-      if (groundHeight > waterLevel) {
+      if (groundHeight > waterLevel || true) {
         let currentMesh = mesh.clone();
 
         let randRotation = (i % 10) * 3.1415 * 0.5;
@@ -1205,18 +1327,18 @@ function loadBushes() {
 
         // Create haybale hitbox
 
-        const cubeGeometry = new THREE.BoxGeometry(13, 15, 10);
+        const cubeGeometry = new THREE.CylinderGeometry(7, 7, 9.5, 15, 1);
         const cubeMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
 
         const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
 
-        cube.position.x = currentMesh.position.x;
-        cube.position.y = currentMesh.position.y + 4;
-        cube.position.z = currentMesh.position.z;
+        cube.position.x = currentMesh.position.x + 0.4;
+        cube.position.y = currentMesh.position.y + 6;
+        cube.position.z = currentMesh.position.z + 0.2;
 
-        cube.rotation.x = 0;
+        cube.rotation.x = Math.PI * 0.5;
         cube.rotation.y = 0;
-        cube.rotation.z = 0;
+        cube.rotation.z = 0.1;
 
         cube.receiveShadow = false;
         cube.castShadow = false;
@@ -1399,23 +1521,6 @@ function createPlane(objectInfo) {
       shininess: 1,
       color: objectInfo.colour || 0xffffff,
     });
-
-    const positionAttribute = geometry.getAttribute("position");
-
-    const vertex = new THREE.Vector3();
-
-    for (let i = 0; i < positionAttribute.count; i++) {
-      vertex.fromBufferAttribute(positionAttribute, i); // read vertex
-
-      // do something with vertex
-
-      positionAttribute.setXYZ(
-        i,
-        vertex.x,
-        vertex.y,
-        vertex.z - getGroundHeight(vertex.x, vertex.y),
-      ); // write coordinates back
-    }
   }
 
   if (objectInfo.name == "water") {
@@ -1456,6 +1561,36 @@ function createPlane(objectInfo) {
   plane.rotation.x = objectInfo.rotation.x;
   plane.rotation.y = objectInfo.rotation.y;
   plane.rotation.z = objectInfo.rotation.z;
+
+  if (objectInfo.name == "ground") {
+    const positionAttribute = geometry.getAttribute("position");
+
+    const vertex = new THREE.Vector3();
+    const worldVertex = new THREE.Vector3();
+    const objectMatrix = plane.matrixWorld; // mesh = your terrain mesh
+    const inverseMatrix = new THREE.Matrix4();
+    inverseMatrix.copy(plane.matrixWorld).invert();
+
+    let xPos = -WORLD_SIZE / 2;
+    let zPos = -WORLD_SIZE / 2;
+
+    for (let i = 0; i < positionAttribute.count; i++) {
+      vertex.fromBufferAttribute(positionAttribute, i); // local space
+
+      const height = getGroundHeight(xPos, zPos); // world x, world y
+      vertex.z += height; // or -height if you want to invert
+
+      positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z); // write back local space
+
+      xPos += WORLD_SIZE / objectInfo.segments.x;
+
+      if (xPos > WORLD_SIZE / 2) {
+        xPos = -WORLD_SIZE / 2;
+        zPos += WORLD_SIZE / objectInfo.segments.y;
+      }
+
+    }
+  }
 
   scene.add(plane);
 
@@ -1630,10 +1765,7 @@ function createGrass(objectInfo) {
   );
 
   // itemSize = 3 because there are 3 values (components) per vertex
-  grassGeometry.setAttribute(
-    "position",
-    new THREE.BufferAttribute(vertices, 3),
-  );
+  grassGeometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3),);
 
   if (grassMaterial == 0) {
     let texture = textureLoader.leaf;
@@ -1733,9 +1865,9 @@ function createGrass(objectInfo) {
         groundHeight = -10000;
       }
 
-      if (groundHeight >= maxGrassLevel + Math.random() * 8) {
+      /*if (groundHeight >= maxGrassLevel + Math.random() * 8) {
         groundHeight = -10000;
-      }
+      }*/
 
       let grassSize = Math.max(
         0.5,
@@ -1902,6 +2034,12 @@ function updateGrass() {
 
 function animatePlants(delta) {
   grassUniforms.time.value = clock.getElapsedTime();
+
+  grassUniforms.fogNear.value = fog.near;
+  grassUniforms.fogFar.value = fog.far;
+  if (player.isUnderwater) grassUniforms.fogColour.value = new THREE.Vector3(0.455, 0.525, 0.733);
+  if (!player.isUnderwater) grassUniforms.fogColour.value = new THREE.Vector3(0.85, 0.85, 1.0);
+
   grassMaterial.uniformsNeedUpdate = true;
 }
 
@@ -1928,8 +2066,7 @@ function updateUI(delta) {
   UIManager.health.value = player.health;
   UIManager.stamina.value = player.stamina;
 
-  UIManager.reload.value =
-    (player.gun.guns[player.gun.selectedGun].reloadCounter / player.gun.guns[player.gun.selectedGun].reloadTime) * 100;
+  UIManager.reload.value = (player.gun.guns[player.gun.selectedGun].reloadCounter / player.gun.guns[player.gun.selectedGun].reloadTime) * 100;
 
   // Update leaderboard
 
@@ -2117,8 +2254,8 @@ function onWindowResize() {
 // Keyboard controlls
 
 function processKeyboard(delta) {
-  let isMoving = 0;
-  let isRunning = 1;
+  player.isMoving = 0;
+  player.isRunning = 1;
 
   let speedPerSecond = speed;
   if (player.crouched) speedPerSecond *= player.crouchSpeedMultiplier;
@@ -2143,16 +2280,18 @@ function processKeyboard(delta) {
     if (player.stamina > 0) {
       actualSpeed *= runSpeedMultiplier;
       speedPerSecond *= runSpeedMultiplier;
-      isRunning = 1.5;
+      player.isRunning = 1.5;
 
-      player.stamina -= player.staminaLoss * delta;
+      if (player.grounded) player.stamina -= player.staminaLoss * delta;
     }
   } else {
+
     if (player.stamina <= player.maxStamina) {
-      player.stamina += player.staminaRegen * delta;
+      if (player.grounded) player.stamina += player.staminaRegen * delta;
     } else {
       player.stamina = player.maxStamina;
     }
+
   }
 
   playerState = "static";
@@ -2184,7 +2323,7 @@ function processKeyboard(delta) {
 
     if (keyboard["a"] || keyboard["arrowleft"]) {
       controls.moveRight(-actualSideSpeed);
-      isMoving = 1;
+      player.isMoving = 1;
 
       playerState = "strafe";
 
@@ -2194,7 +2333,7 @@ function processKeyboard(delta) {
 
     if (keyboard["d"] || keyboard["arrowright"]) {
       controls.moveRight(actualSideSpeed);
-      isMoving = 1;
+      player.isMoving = 1;
 
       playerState = "strafe";
 
@@ -2204,7 +2343,7 @@ function processKeyboard(delta) {
 
     if (keyboard["s"] || keyboard["arrowdown"]) {
       controls.moveForward(-actualSpeed);
-      isMoving = 1;
+      player.isMoving = 1;
 
       playerState = "backward";
 
@@ -2213,7 +2352,7 @@ function processKeyboard(delta) {
 
     if (keyboard["w"] || keyboard["arrowup"]) {
       controls.moveForward(actualSpeed);
-      isMoving = 1;
+      player.isMoving = 1;
 
       playerState = "walk";
 
@@ -2234,23 +2373,30 @@ function processKeyboard(delta) {
 
     player.gun.reloadAudio.currentTime = 0;
     player.gun.reloadAudio.play();
+
+    socket.emit("reloadingGun", {
+      roomID: player.room,
+      socketID: socket.id
+    });
   }
 
-  if (isRunning > 1 && (keyboard["w"] || keyboard["arrowup"]))
+  if (player.isRunning > 1 && (keyboard["w"] || keyboard["arrowup"]))
     playerState = "run";
 
-  if (isMoving > 0 && player.grounded) {
+  if (player.isMoving > 0 && player.grounded) {
     // Play footstep sounds
 
     player.footstepAudio.volume = 0.2;
     player.waterFootstepAudio.volume = 0.2;
 
+    if (player.crouched) {
+      player.footstepAudio.volume *= 0.3;
+      player.waterFootstepAudio.volume *= 0.3;
+    }
+
     if (player.footstepAudio.paused) {
-      if (
-        getGroundHeight(camera.position.x, camera.position.z) >
-        waterLevel - 2
-      ) {
-        // In water
+      if (getGroundHeight(camera.position.x, camera.position.z) > waterLevel - 2) {
+        // On land
         player.waterFootstepAudio.pause();
 
         player.footstepAudio.currentTime = 0;
@@ -2259,10 +2405,7 @@ function processKeyboard(delta) {
     }
 
     if (player.waterFootstepAudio.paused) {
-      if (
-        getGroundHeight(camera.position.x, camera.position.z) <=
-        waterLevel - 2
-      ) {
+      if (getGroundHeight(camera.position.x, camera.position.z) <= waterLevel - 2) {
         // In water
         player.waterFootstepAudio.currentTime = 0;
         player.waterFootstepAudio.play();
@@ -2271,7 +2414,7 @@ function processKeyboard(delta) {
       }
     }
 
-    if (isRunning > 1 && (keyboard["w"] || keyboard["arrowup"])) {
+    if (player.isRunning > 1 && (keyboard["w"] || keyboard["arrowup"])) {
       player.footstepAudio.playbackRate = 2;
       player.waterFootstepAudio.playbackRate = 2;
     } else {
@@ -2292,7 +2435,7 @@ function processKeyboard(delta) {
 
   let tick = clock.getElapsedTime();
 
-  let bobble = Math.abs(Math.sin(tick * 5 * isRunning) * 0.5) * isMoving * 1.5;
+  let bobble = Math.abs(Math.sin(tick * 5 * player.isRunning) * 0.5) * player.isMoving * 1.5;
   cameraOffsetY = lerp(cameraOffsetY, bobble, 0.25);
 }
 
@@ -2318,10 +2461,30 @@ function processJump(delta) {
     camera.position.y = groundHeightAtPosition + (10 + cameraOffsetY) * player.crouchHeight;
   }
 
-  if (keyboard[" "] && player.grounded) {
+  if (camera.position.y <= waterLevel && !player.isUnderwater) {
+    player.isUnderwater = true;
+
+    fog.near = 0;
+    fog.far = 30;
+    fog.colour = 0x7486BB;
+    scene.fog = new THREE.Fog(fog.colour, fog.near, fog.far);
+
+  } else if (camera.position.y > waterLevel && player.isUnderwater) {
+    player.isUnderwater = false;
+
+    fog.near = 100;
+    fog.far = 1000;
+    fog.colour = 0xddddff;
+    scene.fog = new THREE.Fog(fog.colour, fog.near, fog.far);
+  }
+
+  if (!keyboard[" "] && player.grounded) player.canJump = true;
+
+  if (keyboard[" "] && player.grounded && player.canJump) {
     // Jump
     player.velocity.y = player.jumpVelocity;
     player.grounded = false;
+    player.canJump = false;
   }
 }
 
@@ -2366,7 +2529,54 @@ function updateBalls(delta) {
       let secondBB = new THREE.Box3().setFromObject(object);
 
       let collision = firstBB.intersectsBox(secondBB);
-      if (collision) hasCollided = true;
+      
+
+      // If collision then bounce ball
+      if (collision) {
+        // Check direction of collided face
+        let normal = new THREE.Vector3();
+        normal.copy(ball.position).sub(object.position);
+        
+        let raycaster = new THREE.Raycaster(
+          ball.position.clone().sub(ball.velocity.clone().normalize().multiplyScalar(1)),
+          object.position.clone().sub(ball.position).normalize(),
+          0,
+          100,
+        );
+
+        let intersects = raycaster.intersectObject(object);
+
+        if (intersects.length > 0) {
+          normal.copy(intersects[0].face.normal);
+          normal.normalize();
+
+          let restitution = 0.7;
+
+          ball.position.x -= ball.velocity.x * delta;
+          ball.position.y -= ball.velocity.y * delta;
+          ball.position.z -= ball.velocity.z * delta;
+
+          // Reflect the ball
+          ball.velocity.x = ball.velocity.x - normal.x * 2 * ball.velocity.dot(normal) * restitution;
+          ball.velocity.y = ball.velocity.y - normal.y * 2 * ball.velocity.dot(normal) * restitution;
+          ball.velocity.z = ball.velocity.z - normal.z * 2 * ball.velocity.dot(normal) * restitution;
+
+          // Play impact sound
+          let ballDistance = ball.position.distanceTo(camera.position);
+          ballDistance *= ballDistance;
+          ballDistance *= 0.005;
+          ballDistance += 1;
+
+          let volume = 0.3 / ballDistance;
+
+          player.gun.hitTreeAudio.currentTime = 0;
+          player.gun.hitTreeAudio.volume = volume;
+          player.gun.hitTreeAudio.play();
+
+        } else {
+          hasCollided = true;
+        }
+      }
     }
 
     if (ball.position.y < -100 || hasCollided) {
@@ -2384,9 +2594,9 @@ function lerp(a, b, alpha) {
 window.addEventListener("keydown", (e) => {
   keyboard[e.key.toLowerCase()] = true;
 
-  if (e.key == "e") player.gun.selectedGun = 1 - player.gun.selectedGun;
-  if (e.key == "1") player.gun.selectedGun = 0;
-  if (e.key == "2") player.gun.selectedGun = 1;
+  if (e.key.toLowerCase() == "e") player.gun.selectedGun = 1 - player.gun.selectedGun;
+  if (e.key.toLowerCase() == "1") player.gun.selectedGun = 0;
+  if (e.key.toLowerCase() == "2") player.gun.selectedGun = 1;
 });
 
 window.addEventListener("keyup", (e) => {
@@ -2465,6 +2675,10 @@ function animate() {
       roomID: player.room,
       state: playerState,
       time: Date.now(),
+      isMoving: player.isMoving,
+      grounded: player.grounded,
+      isRunning: player.isRunning,
+      isCrouching: player.crouched,
     });
   }
 
